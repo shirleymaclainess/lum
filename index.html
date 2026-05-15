@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lum - Gestão de Estudos</title>
+    
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png">
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-color: #ffffff;
+            --text-color: #212529;
+            --primary-color: #4f46e5;
+            --border-color: #e5e7eb;
+            --today-bg: #e5e7eb; /* Cinza leve para o dia atual */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Header com Logo */
+        header {
+            background-color: var(--card-color);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+
+        .brand-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            letter-spacing: -0.5px;
+        }
+
+        .actions-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        /* Container Principal */
+        main {
+            flex: 1;
+            padding: 1rem;
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Carrossel Semanal */
+        .semana-carrossel {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            margin-bottom: 1.5rem;
+            background: var(--card-color);
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .dia-coluna {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .dia-coluna .nome-dia {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .dia-coluna .num-dia {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        /* Destaque do Dia Atual */
+        .dia-coluna.hoje {
+            background-color: var(--today-bg);
+            border: 1px solid #d1d5db;
+        }
+
+        .dia-coluna.selecionado {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .dia-coluna.selecionado .nome-dia {
+            color: #e0e7ff;
+        }
+
+        /* Lista de Tarefas do Dia */
+        .tarefas-container h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .lista-estudos {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .card-estudo {
+            background: var(--card-color);
+            padding: 12px;
+            border-radius: 10px;
+            border-left: 5px solid var(--primary-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Botão Flutuante para Adicionar */
+        .btn-flutuante {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            font-size: 1.8rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.4);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <img src="./icons/icon-192.png" alt="Lum Logo" class="logo-img" onerror="this.style.display='none'">
+            <span class="brand-name">Lum</span>
+        </div>
+        <div>
+            <button class="actions-btn" id="btnConfig">Dados ⚙️</button>
+        </div>
+    </header>
+
+    <main>
+        <section class="semana-carrossel" id="carrosselSemana">
+            </section>
+
+        <section class="tarefas-container">
+            <h2 id="tituloDiaSelecionado">Estudos de Hoje</h2>
+            
+            <div class="lista-estudos" id="listaEstudos">
+                <div class="card-estudo">
+                    <h3>Introdução à Repetição Espaçada</h3>
+                    <p style="font-size: 0.85rem; color: #6b7280; margin-top: 4px;">Disciplina: Metodologia • Status: Estudar</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <button class="btn-flutuante" id="btnNovoEstudo">+</button>
+
+    <script>
+        // Renderização Básica da Semana Atual para Teste Visual
+        function inicializarCarrossel() {
+            const carrossel = document.getElementById('carrosselSemana');
+            const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            const hoje = new Date();
+            
+            // Encontra o domingo da semana atual
+            const inicioSemana = new Date(hoje);
+            inicioSemana.setDate(hoje.getDate() - hoje.getDay());
+
+            carrossel.innerHTML = '';
+
+            for (let i = 0; i < 7; i++) {
+                const diaAtual = new Date(inicioSemana);
+                diaAtual.setDate(inicioSemana.getDate() + i);
+
+                const div = document.createElement('div');
+                div.className = 'dia-coluna';
+                
+                // Verifica se é exatamente o dia de hoje
+                if (diaAtual.toDateString() === hoje.toDateString()) {
+                    div.classList.add('hoje');
+                }
+
+                div.innerHTML = `
+                    <span class="nome-dia">${diasSemana[diaAtual.getDay()]}</span>
+                    <span class="num-dia">${diaAtual.getDate()}</span>
+                `;
+                
+                carrossel.appendChild(div);
+            }
+        }
+
+        // Script de Registro do Service Worker forçando atualização
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                .then(reg => {
+                    // Força a checagem de atualização toda vez que abre o app
+                    reg.update();
+                }).catch(err => console.log('Erro ao registrar SW:', err));
+            });
+        }
+
+        // Inicializa a interface estática
+        // Script de Registro do Service Worker forçando atualização
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                .then(reg => {
+                    // Força a checagem de atualização toda vez que abre o app
+                    reg.update();
+                }).catch(err => console.log('Erro ao registrar SW:', err));
+            });
+        }
+
+        // --- SUBSTUIÇÃO AQUI: Inicializa tudo quando a página carrega ---
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Desenha os dias da semana na tela
+            inicializarCarrossel();
+            
+            try {
+                // Liga o motor do banco de dados IndexedDB
+                await inicializarBanco();
+                
+                // Teste rápido no console para provar que está funcionando
+                const listaDeStatus = await listarTodos('status');
+                console.log("Status cadastrados no banco nativo:", listaDeStatus);
+                
+            } catch (erro) {
+                console.error("Falha ao inicializar a aplicação:", erro);
+            }
+        });
+
+        // --- CONFIGURAÇÃO DO INDEXEDDB ---
+const DB_NAME = 'LumDB';
+const DB_VERSION = 1;
+let db;
+
+// Função para inicializar/abrir o banco de dados
+function inicializarBanco() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+        // Executado se for a primeira vez abrindo o banco ou se a versão subir
+        request.onupgradeneeded = function(event) {
+            const dbRef = event.target.result;
+
+            // 1. Tabela de Disciplinas
+            if (!dbRef.objectStoreNames.contains('disciplinas')) {
+                dbRef.createObjectStore('disciplinas', { keyPath: 'id', autoIncrement: true });
+            }
+
+            // 2. Tabela de Status (customizáveis)
+            if (!dbRef.objectStoreNames.contains('status')) {
+                dbRef.createObjectStore('status', { keyPath: 'id', autoIncrement: true });
+            }
+
+            // 3. Tabela de Tipos de Tarefa
+            if (!dbRef.objectStoreNames.contains('tipos')) {
+                dbRef.createObjectStore('tipos', { keyPath: 'id', autoIncrement: true });
+            }
+
+            // 4. Tabela Principal de Estudos
+            if (!dbRef.objectStoreNames.contains('estudos')) {
+                const estudoStore = dbRef.createObjectStore('estudos', { keyPath: 'id', autoIncrement: true });
+                // Criamos índices para conseguir buscar/filtrar de forma rápida depois
+                estudoStore.createIndex('dataRevisao', 'dataRevisao', { unique: false });
+                estudoStore.createIndex('disciplinaId', 'disciplinaId', { unique: false });
+            }
+
+            // 5. Tabela de Configurações Gerais (sistema de combos de repetição)
+            if (!dbRef.objectStoreNames.contains('configuracoes')) {
+                dbRef.createObjectStore('configuracoes', { keyPath: 'chave' });
+            }
+        };
+
+        request.onsuccess = function(event) {
+            db = event.target.result;
+            console.log('IndexedDB: Banco de dados "LumDB" carregado com sucesso.');
+            
+            // Após abrir com sucesso, garante que temos dados padrão cadastrados
+            garantirDadosPadrao().then(() => resolve(db));
+        };
+
+        request.onerror = function(event) {
+            console.error('IndexedDB: Erro ao abrir banco de dados:', event.target.error);
+            reject(event.target.error);
+        };
+    });
+}
+
+// Alimenta o banco com dados iniciais (apenas se estiverem vazios)
+async function garantirDadosPadrao() {
+    // Inicializa Status Padrão se não existirem
+    const totalStatus = await contarRegistros('status');
+    if (totalStatus === 0) {
+        const statusPadrao = [
+            { nome: 'Estudar', cor: '#3b82f6' },
+            { nome: 'Assistir Aula', cor: '#8b5cf6' },
+            { nome: 'Praticar', cor: '#10b981' },
+            { nome: 'Revisar', cor: '#f59e0b' },
+            { nome: 'Feito', cor: '#6b7280' }
+        ];
+        for (let s of statusPadrao) await salvarRegistro('status', s);
+    }
+
+    // Inicializa Tipos de Tarefa Padrão se não existirem
+    const totalTipos = await contarRegistros('tipos');
+    if (totalTipos === 0) {
+        const tiposPadrao = [
+            { nome: 'Tarefa' },
+            { nome: 'Exercício' },
+            { nome: 'Prova' },
+            { nome: 'Projeto' }
+        ];
+        for (let t of tiposPadrao) await salvarRegistro('tipos', t);
+    }
+
+    // Inicializa os Combos de Repetição Espaçada nas Configurações
+    const temCombos = await buscarRegistro('configuracoes', 'combos_repeticao');
+    if (!temCombos) {
+        await salvarRegistro('configuracoes', {
+            chave: 'combos_repeticao',
+            opcoes: [
+                { id: 'curto', nome: 'Focado (1, 3, 7 dias)', passos: [1, 3, 7] },
+                { id: 'longo', nome: 'Expandido (1, 3, 7, 14, 30 dias)', passos: [1, 3, 7, 14, 30] }
+            ]
+        });
+    }
+}
+
+// --- FUNÇÕES UTILITÁRIAS DE MANIPULAÇÃO (CRUD) ---
+
+// Salvar ou atualizar um registro em qualquer tabela
+function salvarRegistro(storeName, objeto) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        const request = store.put(objeto); // .put adiciona se não existe ou atualiza se já tem ID
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+// Buscar todos os registros de uma tabela
+function listarTodos(storeName) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readonly');
+        const store = transaction.objectStore(storeName);
+        const request = store.getAll();
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+// Buscar um registro específico pela Chave/ID
+function buscarRegistro(storeName, id) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readonly');
+        const store = transaction.objectStore(storeName);
+        const request = store.get(id);
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+// Deletar um registro por ID
+function deletarRegistro(storeName, id) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        const request = store.delete(id);
+
+        request.onsuccess = () => resolve(true);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+// Conta quantos registros existem na tabela (usado para checagem inicial)
+function contarRegistros(storeName) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readonly');
+        const store = transaction.objectStore(storeName);
+        const request = store.count();
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+    </script>
+</body>
+</html>
+    </script>
+</body>
+</html>
